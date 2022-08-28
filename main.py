@@ -1,6 +1,6 @@
 import openpyxl as openpyxl
 from PIL import Image
-from openpyxl.styles import PatternFill, Color
+from openpyxl.styles import PatternFill
 from openpyxl.utils import get_column_letter
 
 if __name__ == '__main__':
@@ -27,11 +27,10 @@ if __name__ == '__main__':
             bVal = 'FF%02x%02x%02x' % (0, 0, b)
 
             ws[columnLetter + str(index + hPixel)] = r
-            ws[columnLetter + str(index + hPixel)].fill = PatternFill(start_color= rVal, end_color= rVal, fill_type = "solid")
+            ws[columnLetter + str(index + hPixel)].fill = PatternFill(start_color=rVal, end_color=rVal, fill_type="solid")
             ws[columnLetter + str(index + hPixel + 1)] = g
-            ws[columnLetter + str(index + hPixel + 1)].fill = PatternFill(start_color= gVal, end_color= gVal, fill_type = "solid")
+            ws[columnLetter + str(index + hPixel + 1)].fill = PatternFill(start_color=gVal, end_color=gVal, fill_type="solid")
             ws[columnLetter + str(index + hPixel + 2)] = b
-            ws[columnLetter + str(index + hPixel + 2)].fill = PatternFill(start_color= bVal, end_color= bVal, fill_type = "solid")
+            ws[columnLetter + str(index + hPixel + 2)].fill = PatternFill(start_color=bVal, end_color=bVal, fill_type="solid")
 
     wb.save(filename='sample_book.xlsx')
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
