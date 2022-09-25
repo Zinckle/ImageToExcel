@@ -1,31 +1,37 @@
-from time import sleep
-
 import openpyxl as openpyxl
 from PIL import Image
 from openpyxl.styles import PatternFill
 from openpyxl.utils import get_column_letter
 import webbrowser
 import os
+import cv2
 
 if __name__ == '__main__':
-    # imageName = input("Please enter an image name:")
-    test = False
-    images = os.listdir('Images')
 
     wb = openpyxl.Workbook()
-    counter = 0
 
-    for imageName in images:
-        print(imageName)
+    vidcap = cv2.VideoCapture('dolphin21-preview_COkhxs4Y.mp4')
+    success, image = vidcap.read()
+    count = 0
+    while success:
+        cv2.imwrite("Images/%d.jpg" % count, image)  # save frame as JPEG file
+        success, image = vidcap.read()
+        print('Read a new frame: ', success)
+        count += 1
 
-        wb.create_sheet(str(counter))
-        wb.active = wb[str(counter)]
+    images = os.listdir('Images')
+
+    #need to get images in numeric order
+
+    for i in range(len(images)):
+        print(i)
+
+        wb.create_sheet(str(i))
+        wb.active = wb[str(i)]
         ws = wb.active
-        ws.title = str(counter)
+        ws.title = str(i)
 
-        counter += 1
-
-        with Image.open('Images/' + imageName) as inputImage:
+        with Image.open('Images/' + str(i) + '.jpg') as inputImage:
             # inputImage.show()
             rgbInputImage = inputImage.convert('RGB')
             width = inputImage.width
@@ -53,9 +59,7 @@ if __name__ == '__main__':
                                                                               fill_type="solid")
         ws.sheet_view.zoomScale = 5
         ws.sheet_view.showGridLines = False
-        # if test:
-        # os.system("taskkill /im EXCEL.EXE /f")
-        # test = True
+
     wb.remove(wb['Sheet'])
     wb.save(filename='sample_book.xlsx')
     webbrowser.open('sample_book.xlsx')
