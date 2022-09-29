@@ -6,7 +6,7 @@ from openpyxl.utils import get_column_letter
 import os
 import cv2
 import moviepy.editor as mp
-
+import lxml
 
 def splitVideo(video):
     vidcap = cv2.VideoCapture(video)
@@ -30,11 +30,32 @@ def deleteFilesInDirectory(directory):
             print('Failed to delete %s. Reason: %s' % (file_path, e))
 
 
+def videoOptions():
+    video = input("Please enter video name:\n->  ")
+    resizeYN = input("Would you like to resize the video(recommended size is 144p)?:\n(y/n)->  ")
+    if resizeYN == "y" or resizeYN == "Y":
+        # do the resize
+        resizeW = ""
+        resizeH = ""
+        while not resizeW.isdigit():
+            resizeW = input("Please enter the width:\n->  ")
+        while not resizeH.isdigit():
+            resizeH = input("Please enter the height:\n->  ")
+        clip = mp.VideoFileClip(video)
+        clip_resized = clip.resize(height=int(resizeH))
+        clip_resized = clip_resized.resize(width=int(resizeW))
+        clip_resized.write_videofile("resized-" + video)
+        deleteFilesInDirectory('Images')
+        splitVideo("resized-" + video)
+    else:
+        splitVideo(video)
+
+
 if __name__ == '__main__':
 
-    wb = openpyxl.Workbook()
+    wb = openpyxl.Workbook(write_only=True)
     dontCont = True
-    lameMode = False
+    lameMode = True
 
     while dontCont:
         val = input("1: use new video \n2: use existing photos in Image folder\n->  ")
@@ -46,29 +67,21 @@ if __name__ == '__main__':
     # sample video: 'dolphin21-preview_COkhxs4Y.mp4'
 
     if val == '1':
-        video = input("Please enter video name:\n->  ")
-        resizeYN = input("Would you like to resize the video(recommended size is 144p)?:\n(y/n)->  ")
-        if resizeYN == "y" or resizeYN == "Y":
-            # do the resize
-            resizeW = ""
-            resizeH = ""
-            while not resizeW.isdigit():
-                resizeW = input("Please enter the width:\n->  ")
-            while not resizeH.isdigit():
-                resizeH = input("Please enter the height:\n->  ")
-            clip = mp.VideoFileClip(video)
-            clip_resized = clip.resize(height=int(resizeH))
-            clip_resized = clip_resized.resize(width=int(resizeW))
-            clip_resized.write_videofile("resized-" + video)
-            deleteFilesInDirectory('Images')
-            splitVideo("resized-" + video)
-        else:
-            splitVideo(video)
+        videoOptions()
 
     images = os.listdir('Images')
 
+    # TODO:add option to remove frames to increase efficiency.
+
+    # TODO: create controller for lameMode
+
+    # TODO: add ability to use gifs
+    # clip = mp.VideoFileClip("mygif.gif")
+    # clip.write_videofile("myvideo.mp4")
+
     for i in range(len(images)):
         print(i)
+
 
         wb.create_sheet(str(i))
         wb.active = wb[str(i)]
@@ -81,33 +94,43 @@ if __name__ == '__main__':
             width = inputImage.width
             height = inputImage.height
 
+        ws.dimensions(width=width, height=height)
+
+        rowCount = 0
+        colCount = 0
+
+        for row in ws.iter_rows():
+            for cell in row:
+                cell.fill = PatternFill(start_color=rgbVal, end_color=rgbVal, fill_type="solid")
+
         for hPixel in range(1, height):
-            shift = hPixel - 1 if hPixel > 1 else hPixel
-            index = len(ws['A']) - shift
+            index = (hPixel * 3) - 2
             for wPixel in range(1, width):
                 r, g, b = rgbInputImage.getpixel((wPixel, hPixel))
                 columnLetter = get_column_letter(wPixel)
 
                 if lameMode:
                     rgbVal = 'FF%02x%02x%02x' % (r, g, b)
-                    ws[columnLetter + str(index + hPixel)].fill = PatternFill(start_color=rgbVal, end_color=rgbVal,
+                    for column in ws.iter_cols():
+                        print(column.it)
+                    ws[columnLetter + str(index)].fill = PatternFill(start_color=rgbVal, end_color=rgbVal,
                                                                               fill_type="solid")
                 else:
                     rVal = 'FF%02x%02x%02x' % (r, 0, 0)
                     gVal = 'FF%02x%02x%02x' % (0, g, 0)
                     bVal = 'FF%02x%02x%02x' % (0, 0, b)
 
-                    ws[columnLetter + str(index + hPixel)].fill = PatternFill(start_color=rVal, end_color=rVal,
-                                                                              fill_type="solid")
-                    ws[columnLetter + str(index + hPixel + 1)].fill = PatternFill(start_color=gVal, end_color=gVal,
-                                                                                  fill_type="solid")
-                    ws[columnLetter + str(index + hPixel + 2)].fill = PatternFill(start_color=bVal, end_color=bVal,
-                                                                                  fill_type="solid")
+                    ws[columnLetter + str(index)].fill = PatternFill(start_color=rVal, end_color=rVal,
+                                                                     fill_type="solid")
+                    ws[columnLetter + str(index + 1)].fill = PatternFill(start_color=gVal, end_color=gVal,
+                                                                         fill_type="solid")
+                    ws[columnLetter + str(index + 2)].fill = PatternFill(start_color=bVal, end_color=bVal,
+                                                                         fill_type="solid")
         ws.sheet_view.zoomScale = 5
         ws.sheet_view.showGridLines = False
+        # TODO:add a reduced ram usage mode
 
-        #add a reduced ram usage mode
-        #wb.save(filename='sample_book.xlsx')
+        # wb.save(filename='sample_book.xlsx') in every loop reduces ram used but is slower.
 
     wb.remove(wb['Sheet'])
     wb.save(filename='sample_book.xlsx')
