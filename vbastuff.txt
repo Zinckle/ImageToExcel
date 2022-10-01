@@ -1,0 +1,22 @@
+Function myRGB(r, g, b)
+
+    Dim clr As Long, src As Range, sht As String, f, v
+
+    If IsEmpty(r) Or IsEmpty(g) Or IsEmpty(b) Then
+        clr = vbWhite
+    Else
+        clr = RGB(r, g, b)
+    End If
+
+    Set src = Application.ThisCell
+    sht = src.Parent.Name
+
+    f = "Changeit(""" & sht & """,""" & _
+                  src.Address(False, False) & """," & clr & ")"
+    src.Parent.Evaluate f
+    myRGB = ""
+End Function
+
+Sub ChangeIt(sht, c, clr As Long)
+    ThisWorkbook.Sheets(sht).Range(c).Interior.Color = clr
+End Sub

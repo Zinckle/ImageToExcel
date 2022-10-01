@@ -1,12 +1,14 @@
 import shutil
 import openpyxl as openpyxl
 from PIL import Image
+from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles import PatternFill
 from openpyxl.utils import get_column_letter
 import os
 import cv2
 import moviepy.editor as mp
 import lxml
+
 
 def splitVideo(video):
     vidcap = cv2.VideoCapture(video)
@@ -33,6 +35,7 @@ def deleteFilesInDirectory(directory):
 def videoOptions():
     video = input("Please enter video name:\n->  ")
     resizeYN = input("Would you like to resize the video(recommended size is 144p)?:\n(y/n)->  ")
+    deleteFilesInDirectory('Images')
     if resizeYN == "y" or resizeYN == "Y":
         # do the resize
         resizeW = ""
@@ -45,7 +48,6 @@ def videoOptions():
         clip_resized = clip.resize(height=int(resizeH))
         clip_resized = clip_resized.resize(width=int(resizeW))
         clip_resized.write_videofile("resized-" + video)
-        deleteFilesInDirectory('Images')
         splitVideo("resized-" + video)
     else:
         splitVideo(video)
@@ -82,7 +84,6 @@ if __name__ == '__main__':
     for i in range(len(images)):
         print(i)
 
-
         wb.create_sheet(str(i))
         wb.active = wb[str(i)]
         ws = wb.active
@@ -94,28 +95,30 @@ if __name__ == '__main__':
             width = inputImage.width
             height = inputImage.height
 
-        ws.dimensions(width=width, height=height)
+        if lameMode:
+            wPixel = 0
+            hPixel = 0
 
-        rowCount = 0
-        colCount = 0
+            for hPixel in range(1, height):
+                tempList = []
+                for wPixel in range(1, width):
+                    r, g, b = rgbInputImage.getpixel((wPixel, hPixel))
+                    rgbVal = '=@myRGB('+str(r)+','+str(g)+','+str(b)+')'
+                    cell = WriteOnlyCell(ws, value=rgbVal)
+                    # cell.fill = PatternFill("solid", fgColor=rgbVal)
+                    tempList.append(cell)
+                    wPixel += 1
+                hPixel += 1
+                ws.append([c for c in tempList])
 
-        for row in ws.iter_rows():
-            for cell in row:
-                cell.fill = PatternFill(start_color=rgbVal, end_color=rgbVal, fill_type="solid")
 
-        for hPixel in range(1, height):
-            index = (hPixel * 3) - 2
-            for wPixel in range(1, width):
-                r, g, b = rgbInputImage.getpixel((wPixel, hPixel))
-                columnLetter = get_column_letter(wPixel)
+        else:
+            for hPixel in range(1, height):
+                index = (hPixel * 3) - 2
+                for wPixel in range(1, width):
+                    r, g, b = rgbInputImage.getpixel((wPixel, hPixel))
+                    columnLetter = get_column_letter(wPixel)
 
-                if lameMode:
-                    rgbVal = 'FF%02x%02x%02x' % (r, g, b)
-                    for column in ws.iter_cols():
-                        print(column.it)
-                    ws[columnLetter + str(index)].fill = PatternFill(start_color=rgbVal, end_color=rgbVal,
-                                                                              fill_type="solid")
-                else:
                     rVal = 'FF%02x%02x%02x' % (r, 0, 0)
                     gVal = 'FF%02x%02x%02x' % (0, g, 0)
                     bVal = 'FF%02x%02x%02x' % (0, 0, b)
@@ -126,12 +129,10 @@ if __name__ == '__main__':
                                                                          fill_type="solid")
                     ws[columnLetter + str(index + 2)].fill = PatternFill(start_color=bVal, end_color=bVal,
                                                                          fill_type="solid")
-        ws.sheet_view.zoomScale = 5
+        ws.sheet_view.zoomScale = 10
         ws.sheet_view.showGridLines = False
         # TODO:add a reduced ram usage mode
 
         # wb.save(filename='sample_book.xlsx') in every loop reduces ram used but is slower.
-
-    wb.remove(wb['Sheet'])
-    wb.save(filename='sample_book.xlsx')
+    wb.save(filename='video.xlsx')
     # webbrowser.open('sample_book.xlsx')
