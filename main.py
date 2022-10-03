@@ -55,9 +55,9 @@ def videoOptions():
 
 if __name__ == '__main__':
 
-    wb = openpyxl.Workbook(write_only=True)
-    dontCont = True
     lameMode = True
+    wb = openpyxl.Workbook(write_only=lameMode)
+    dontCont = True
 
     while dontCont:
         val = input("1: use new video \n2: use existing photos in Image folder\n->  ")
@@ -72,14 +72,6 @@ if __name__ == '__main__':
         videoOptions()
 
     images = os.listdir('Images')
-
-    # TODO:add option to remove frames to increase efficiency.
-
-    # TODO: create controller for lameMode
-
-    # TODO: add ability to use gifs
-    # clip = mp.VideoFileClip("mygif.gif")
-    # clip.write_videofile("myvideo.mp4")
 
     for i in range(len(images)):
         print(i)
